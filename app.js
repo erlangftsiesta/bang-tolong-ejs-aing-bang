@@ -1,12 +1,15 @@
 const express = require('express');
 const app = express();
 const conn = require('./config/db');
+const BodyParser = require("body-parser");
 const ejs = require('ejs');
+
+app.use(express.static(("dist")));
+app.use(express.json());
+app.use(express.urlencoded({extended: true}))
 
 app.set("view engine", "ejs");
 app.set("views", "src");
-
-app.use(express.json());
 
 //all bug fixed, Status: OK!
 app.get('/data-absensi-rpl3', function(req, res){
@@ -23,9 +26,10 @@ app.get('/data-absensi-rpl3', function(req, res){
                 "data": null
             });
         } else {
-            res.status(200).json({
-                "data": result
-            })
+            res.render("index", {rpl3: result});
+            // res.status(200).json({
+            //     "data": result
+            // }) 
         }
     })
 })
@@ -33,12 +37,12 @@ app.get('/data-absensi-rpl3', function(req, res){
 //all bug fixed, Status: OK!
 app.post('/req-absensi-rpl3', function (req, res) {
     const param = req.body;
-    const name = param.nama;
+    const nama = param.nama;
     const absen = param.absen;
     const date = new Date();
 
-    const queryStr = "INSERT INTO rpl3 (nama, absen, created_ad) VALUES (?, ?, ?)";
-    const values = [name, absen, date];
+    const queryStr = `INSERT INTO rpl3 (absen, nama, created_ad) VALUES (?,?,?)`;
+    const values = [absen, nama, date];
     
     conn.query(queryStr, values, (err, result) => {
         if (err) {
@@ -51,11 +55,12 @@ app.post('/req-absensi-rpl3', function (req, res) {
 
         }
         else {
-            res.status(200).json( {
-                "success": true,
-                "message": "Sip Kesimpen",
-                "data" : result
-            });
+            res.redirect("/data-absensi-rpl3");
+            // res.status(200).json( {
+            //     "success": true,
+            //     "message": "Sip Kesimpen",
+            //     "data" : result
+            // });
         }
     })
 })
@@ -65,7 +70,7 @@ app.get('/cari-data-absensi-rpl3', function(req, res){
     const param = req.query;
     const absen = param.absen;
 
-    const queryStr = `SELECT * FROM rpl3 WHERE absen = ${absen}`;
+    const queryStr = `SELECT * FROM rpl3 WHERE absen = ?`;
     const values = [absen];
 
     conn.query(queryStr, values, (err, result)=> {
@@ -77,12 +82,13 @@ app.get('/cari-data-absensi-rpl3', function(req, res){
                 "data": null
             });
         } else {
-            console.log(result)
-            res.status(200).json({
-                "success": true,
-                "Message": "berhasil memuat data",
-                "data": result
-            });
+            res.render("cariData", {rpl3: result});
+            // console.log(result)
+            // res.status(200).json({
+            //     "success": true,
+            //     "Message": "berhasil memuat data",
+            //     "data": result
+            // });
         }
     })
 })
@@ -93,10 +99,10 @@ app.post('/update-absensi-rpl3', function (req, res) {
     const id = param.id;
     const nama = param.nama;
     const absen = param.absen;
-    const date = new Date();
+    const now = new Date();
 
     const queryStr = `UPDATE rpl3 SET nama = ?, absen = ? WHERE id = ? AND deleted_ad IS NULL`;
-    const values = [nama, absen, id];
+    const values = [nama, absen, id, now];
     
     conn.query(queryStr, values, (err, result) => {
         if (err) {
@@ -115,4 +121,6 @@ app.post('/update-absensi-rpl3', function (req, res) {
         }
     });
 });
+
+app.post
 app.listen(8000);
